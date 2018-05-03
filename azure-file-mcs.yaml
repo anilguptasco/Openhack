@@ -1,0 +1,54 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: azure-minecraft
+spec:
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: azure-minecraft-back
+    spec:
+      containers:
+      - name: azure-minecraft-back
+        image: openhack/minecraft-server:2.0
+        ports:
+        - containerPort: 25565
+          name: minecraft
+        - containerPort: 25575
+          name: rcon
+        env:
+        - name: EULA
+          value: "TRUE"
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "250m"
+          limits:
+            memory: "1.5Gi"
+            cpu: "500m"
+        volumeMounts:
+        - name: volume
+          mountPath: /data
+      volumes:
+        - name: volume
+          persistentVolumeClaim:
+            claimName: agazurefile
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: azure-minecraft-front
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 25565
+    protocol: TCP
+    targetPort: 25565
+    name: azure-minecraft-bacl
+  - port: 25575
+    protocol: TCP
+    targetPort: 25575
+    name: rcon
+  selector:
+    app: azure-minecraft-back
